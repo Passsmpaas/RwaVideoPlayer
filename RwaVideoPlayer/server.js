@@ -8,15 +8,6 @@ const PORT = process.env.PORT || 3000;
 // Logger
 app.use(morgan('dev'));
 
-// API Key Middleware
-app.use((req, res, next) => {
-  const key = req.headers['x-api-key'];
-  if (process.env.API_KEY && key !== process.env.API_KEY) {
-    return res.status(401).json({ error: 'Unauthorized' });
-  }
-  next();
-});
-
 // CORS Middleware
 app.use((req, res, next) => {
   const allowedOrigins = (process.env.ALLOWED_ORIGINS || "").split(',');
@@ -28,7 +19,21 @@ app.use((req, res, next) => {
   next();
 });
 
-// Stream Endpoint
+// ✅ Home route (open for everyone)
+app.get('/', (req, res) => {
+  res.send('✅ Stream Proxy is running. No API key required here.');
+});
+
+// API Key Middleware (only for /stream route)
+app.use('/stream', (req, res, next) => {
+  const key = req.headers['x-api-key'];
+  if (process.env.API_KEY && key !== process.env.API_KEY) {
+    return res.status(401).json({ error: 'Unauthorized - Invalid API key' });
+  }
+  next();
+});
+
+// 🎥 Stream Endpoint
 app.get('/stream', (req, res) => {
   const targetUrl = req.query.url;
 
@@ -60,11 +65,6 @@ app.get('/stream', (req, res) => {
       res.status(500).send('Stream Error');
     })
     .pipe(res);
-});
-
-// Health Check
-app.get('/', (req, res) => {
-  res.send('✅ Stream Proxy is running.');
 });
 
 app.listen(PORT, () => {
