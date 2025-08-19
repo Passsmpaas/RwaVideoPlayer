@@ -23,7 +23,7 @@
   <div id="loginSection" class="mb-6">
     <input id="tokenInput" type="text" placeholder="Enter your login token"
            class="p-2 w-80 rounded border border-green-400 text-black">
-    <button id="loadBatches" 
+    <button id="loadBatches"
             class="ml-2 bg-green-500 hover:bg-green-600 px-4 py-2 rounded-lg font-semibold">
       🔑 Load Batches
     </button>
@@ -61,6 +61,11 @@
         const res = await fetch("/api/batches", {
           headers: { "Authorization": `Bearer ${token}` }
         });
+
+        if (!res.ok) {
+          throw new Error(`Server responded with ${res.status}`);
+        }
+
         const data = await res.json();
 
         batchList.innerHTML = "";
@@ -80,8 +85,8 @@
         });
 
       } catch (err) {
-        console.error(err);
-        alert("❌ Failed to load batches.");
+        console.error("❌ Error:", err);
+        alert("❌ Failed to load batches. Check console for details.");
       }
     });
 
