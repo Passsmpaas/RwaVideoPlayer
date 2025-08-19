@@ -1,51 +1,37 @@
-// server.js
 import express from "express";
-import fetch from "node-fetch";
 import path from "path";
 import { fileURLToPath } from "url";
 
 const app = express();
-const PORT = process.env.PORT || 10000;
+const PORT = process.env.PORT || 3000;
 
-// __dirname define karna (ESM ke liye)
+// __dirname handle karna (ESM me default nahi hota)
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// Static files serve karna (yahan tera test.html hoga)
+// Static serve karega (public folder)
 app.use(express.static(path.join(__dirname, "public")));
 
-// Proxy route for video stream
-app.get("/proxy", async (req, res) => {
+// Example API proxy route (API_KEY optional hai agar tum use karna chaho)
+app.get("/api/test", async (req, res) => {
   try {
-    const targetUrl = req.query.url;
-    if (!targetUrl) return res.status(400).send("❌ Missing url");
-
-    console.log("🔗 Proxy fetching:", targetUrl);
-
-    const response = await fetch(targetUrl, {
+    const response = await fetch("https://jsonplaceholder.typicode.com/posts/1", {
       headers: {
-        "User-Agent":
-          "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/115 Safari/537.36",
-      },
+        "Authorization": `Bearer ${process.env.API_KEY || ""}`
+      }
     });
-
-    if (!response.ok) {
-      return res.status(response.status).send("❌ Upstream fetch failed");
-    }
-
-    res.setHeader(
-      "Content-Type",
-      response.headers.get("content-type") || "application/octet-stream"
-    );
-
-    response.body.pipe(res);
+    const data = await response.json();
+    res.json(data);
   } catch (err) {
-    console.error("Proxy Error:", err.message);
-    res.status(500).send("❌ Proxy Failed: " + err.message);
+    res.status(500).json({ error: err.message });
   }
 });
 
-// Start server
-app.listen(PORT, () =>
-  console.log(`✅ Stream Proxy running at http://localhost:${PORT}`)
-);
+// Root route (test.html serve karega)
+app.get("/", (req, res) => {
+  res.sendFile(path.join(__dirname, "public", "test.html"));
+});
+
+app.listen(PORT, () => {
+  console.log(`✅ Stream Proxy is running on port ${PORT}`);
+});
