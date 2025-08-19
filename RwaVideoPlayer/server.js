@@ -1,77 +1,51 @@
-require('dotenv').config();
-const express = require('express');
-const request = require('request');
-const morgan = require('morgan');
+// server.js
+import express from "express";
+import fetch from "node-fetch";
+import path from "path";
+import { fileURLToPath } from "url";
+
 const app = express();
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 10000;
 
-// Logger
-app.use(morgan('dev'));
+// __dirname define karna (ESM ke liye)
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
-// CORS Middleware
-app.use((req, res, next) => {
-  const allowedOrigins = (process.env.ALLOWED_ORIGINS || "").split(',');
-  const origin = req.headers.origin;
-  if (origin && !allowedOrigins.includes(origin)) {
-    return res.status(403).json({ error: 'CORS Blocked Origin' });
+// Static files serve karna (yahan tera test.html hoga)
+app.use(express.static(path.join(__dirname, "public")));
+
+// Proxy route for video stream
+app.get("/proxy", async (req, res) => {
+  try {
+    const targetUrl = req.query.url;
+    if (!targetUrl) return res.status(400).send("❌ Missing url");
+
+    console.log("🔗 Proxy fetching:", targetUrl);
+
+    const response = await fetch(targetUrl, {
+      headers: {
+        "User-Agent":
+          "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/115 Safari/537.36",
+      },
+    });
+
+    if (!response.ok) {
+      return res.status(response.status).send("❌ Upstream fetch failed");
+    }
+
+    res.setHeader(
+      "Content-Type",
+      response.headers.get("content-type") || "application/octet-stream"
+    );
+
+    response.body.pipe(res);
+  } catch (err) {
+    console.error("Proxy Error:", err.message);
+    res.status(500).send("❌ Proxy Failed: " + err.message);
   }
-  res.setHeader('Access-Control-Allow-Origin', origin || '*');
-  next();
 });
 
-// ✅ Home route (open for everyone)
-app.get('/', (req, res) => {
-  res.send('✅ Stream Proxy is running. No API key required here.');
-});
-
-// API Key Middleware (only for /stream route)
-app.use('/stream', (req, res, next) => {
-  const key = req.headers['x-api-key'];
-  if (process.env.API_KEY && key !== process.env.API_KEY) {
-    return res.status(401).json({ error: 'Unauthorized - Invalid API key' });
-  }
-  next();
-});
-
-// 🎥 Stream Endpoint
-app.get('/stream', (req, res) => {
-  const targetUrl = req.query.url;
-
-  if (!targetUrl || !/^https?:\/\/.+/.test(targetUrl)) {
-    return res.status(400).json({ error: 'Invalid or missing "url" parameter.' });
-  }
-
-  if (!targetUrl.match(/\.(m3u8|mp4|ts|webm)(\?.*)?$/i)) {
-    return res.status(400).json({ error: 'Unsupported media type.' });
-  }
-
-  const customHeaders = {
-    'User-Agent': req.query.ua || 'MyAdvancedClient/1.0',
-    'Referer': req.query.referer || 'https://appx-play.akamai.net.in/',
-    'Origin': req.query.origin || 'https://appx-play.akamai.net.in/',
-    'X-Custom-Auth': req.query.token || undefined
-  };
-
-  console.log(`[+] Streaming: ${targetUrl}`);
-
-  request
-    .get({
-      url: targetUrl,
-      headers: customHeaders,
-      timeout: 10000
-    })
-    .on('error', (err) => {
-      console.error('[-] Stream error:', err.message);
-      res.status(500).send('Stream Error');
-    })
-    .pipe(res);
-});
-
-app.listen(PORT, () => {
-  console.log(`🚀 Advanced Stream Proxy running on port ${PORT}`);
-});
-
-const path = require('path');
-
-// Static files serve karne ke liye
-app.use(express.static(path.join(__dirname, 'public')));
+// Start server
+app.listen(PORT, () =>
+  console.log(`✅ Stream Proxy running at http://localhost:${PORT}`)
+);
