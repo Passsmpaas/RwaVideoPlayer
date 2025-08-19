@@ -1,71 +1,70 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Rwa Video Player Test</title>
   <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
   <style>
     body {
+      background: #121212;
+      color: white;
       font-family: Arial, sans-serif;
-      background: #111;
-      color: #fff;
       text-align: center;
       padding: 20px;
     }
-    video {
-      width: 80%;
+    #video {
+      width: 90%;
       max-width: 800px;
       margin-top: 20px;
-      border: 3px solid #00ffcc;
-      border-radius: 12px;
+      border: 2px solid #00ff99;
+      border-radius: 10px;
     }
     button {
-      padding: 10px 20px;
+      background: #00ff99;
+      color: #000;
       font-size: 16px;
-      margin-top: 20px;
-      background: #00ffcc;
+      padding: 10px 20px;
       border: none;
       border-radius: 8px;
       cursor: pointer;
     }
+    button:hover {
+      background: #00cc77;
+    }
   </style>
 </head>
 <body>
-  <h1>🎬 Rwa Video Player Test</h1>
-  <button onclick="loadStream()">Play Test Stream</button>
-  <br>
+  <h2>🎬 Rwa Video Player Test</h2>
+  <button onclick="playStream()">▶️ Play Test Stream</button>
+  <br /><br />
   <video id="video" controls></video>
 
   <script>
-    async function loadStream() {
+    function playStream() {
+      // 👇 Yahan apna m3u8 URL daal
+      const originalUrl =
+        "https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8";
+
+      const proxiedUrl = `/proxy?url=${encodeURIComponent(originalUrl)}`;
       const video = document.getElementById("video");
-      const streamUrl = "https://tera-render-url.onrender.com/stream?url=https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8";
 
-      try {
-        const res = await fetch(streamUrl, {
-          headers: { "x-api-key": "VJ35n92JSKdlsk2398DKJd923kfdlsA9dk98" }
+      if (Hls.isSupported()) {
+        const hls = new Hls();
+        hls.loadSource(proxiedUrl);
+        hls.attachMedia(video);
+        hls.on(Hls.Events.MANIFEST_PARSED, function () {
+          video.play();
         });
-
-        if (!res.ok) {
-          alert("Error: " + res.status + " " + res.statusText);
-          return;
-        }
-
-        const blob = await res.blob();
-        const blobUrl = URL.createObjectURL(blob);
-
-        if (Hls.isSupported()) {
-          const hls = new Hls();
-          hls.loadSource(blobUrl);
-          hls.attachMedia(video);
-        } else if (video.canPlayType("application/vnd.apple.mpegurl")) {
-          video.src = blobUrl;
-        }
-        video.play();
-      } catch (err) {
-        alert("Failed: " + err.message);
+      } else if (video.canPlayType("application/vnd.apple.mpegurl")) {
+        video.src = proxiedUrl;
+        video.addEventListener("loadedmetadata", () => {
+          video.play();
+        });
+      } else {
+        alert("Your browser does not support HLS playback.");
       }
     }
   </script>
 </body>
-  </html>
+</html>
