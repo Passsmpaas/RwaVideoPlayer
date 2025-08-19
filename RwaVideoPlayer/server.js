@@ -70,3 +70,8 @@ app.get('/stream', (req, res) => {
 app.listen(PORT, () => {
   console.log(`🚀 Advanced Stream Proxy running on port ${PORT}`);
 });
+
+const path = require('path');
+
+// Static files serve karne ke liye
+app.use(express.static(path.join(__dirname, 'public')));
