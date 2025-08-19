@@ -1,70 +1,105 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Rwa Video Player Test</title>
-  <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+  <meta charset="UTF-8">
+  <title>🎬 RWA Video Dashboard</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <script src="https://cdn.tailwindcss.com"></script>
   <style>
-    body {
-      background: #121212;
-      color: white;
-      font-family: Arial, sans-serif;
-      text-align: center;
-      padding: 20px;
+    body { background: #0d0d0d; color: white; font-family: 'Segoe UI', sans-serif; }
+    .video-container {
+      position: relative; width: 100%; max-width: 900px; margin: auto;
+      border: 2px solid #22c55e; border-radius: 15px; overflow: hidden;
+      box-shadow: 0px 0px 20px rgba(34,197,94,0.5);
     }
-    #video {
-      width: 90%;
-      max-width: 800px;
-      margin-top: 20px;
-      border: 2px solid #00ff99;
-      border-radius: 10px;
-    }
-    button {
-      background: #00ff99;
-      color: #000;
-      font-size: 16px;
-      padding: 10px 20px;
-      border: none;
-      border-radius: 8px;
-      cursor: pointer;
-    }
-    button:hover {
-      background: #00cc77;
-    }
+    video { width: 100%; height: auto; display: block; background: black; }
   </style>
 </head>
-<body>
-  <h2>🎬 Rwa Video Player Test</h2>
-  <button onclick="playStream()">▶️ Play Test Stream</button>
-  <br /><br />
-  <video id="video" controls></video>
+<body class="flex flex-col items-center justify-start min-h-screen p-6">
 
+  <h1 class="text-3xl font-bold mb-6">🎬 RWA Video Dashboard</h1>
+
+  <!-- Step 1: Enter Token -->
+  <div id="loginSection" class="mb-6">
+    <input id="tokenInput" type="text" placeholder="Enter your login token"
+           class="p-2 w-80 rounded border border-green-400 text-black">
+    <button id="loadBatches" 
+            class="ml-2 bg-green-500 hover:bg-green-600 px-4 py-2 rounded-lg font-semibold">
+      🔑 Load Batches
+    </button>
+  </div>
+
+  <!-- Step 2: Batch List -->
+  <div id="batchSection" class="hidden mb-6 w-full max-w-3xl">
+    <h2 class="text-xl font-semibold mb-3">📂 Your Batches</h2>
+    <ul id="batchList" class="grid grid-cols-1 sm:grid-cols-2 gap-4"></ul>
+  </div>
+
+  <!-- Step 3: Video Player -->
+  <div id="playerSection" class="hidden w-full max-w-3xl">
+    <h2 class="text-xl font-semibold mb-3">▶ Selected Video</h2>
+    <div class="video-container">
+      <video id="video" controls></video>
+    </div>
+  </div>
+
+  <!-- HLS.js -->
+  <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
   <script>
-    function playStream() {
-      // 👇 Yahan apna m3u8 URL daal
-      const originalUrl =
-        "https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8";
+    const loadBtn = document.getElementById("loadBatches");
+    const batchSection = document.getElementById("batchSection");
+    const playerSection = document.getElementById("playerSection");
+    const batchList = document.getElementById("batchList");
+    const video = document.getElementById("video");
 
-      const proxiedUrl = `/proxy?url=${encodeURIComponent(originalUrl)}`;
-      const video = document.getElementById("video");
+    // ✅ Step 1: User enters token
+    loadBtn.addEventListener("click", async () => {
+      const token = document.getElementById("tokenInput").value.trim();
+      if (!token) return alert("⚠ Please enter a valid token");
+
+      try {
+        const res = await fetch("/api/batches", {
+          headers: { "Authorization": `Bearer ${token}` }
+        });
+        const data = await res.json();
+
+        batchList.innerHTML = "";
+        if (!data.batches || data.batches.length === 0) {
+          batchList.innerHTML = `<p class="text-red-400">❌ No batches found.</p>`;
+          return;
+        }
+
+        // ✅ Step 2: Show batches
+        batchSection.classList.remove("hidden");
+        data.batches.forEach(batch => {
+          const li = document.createElement("li");
+          li.className = "p-4 bg-gray-800 rounded-lg cursor-pointer hover:bg-green-600";
+          li.innerText = batch.name;
+          li.onclick = () => playVideo(batch.streamUrl);
+          batchList.appendChild(li);
+        });
+
+      } catch (err) {
+        console.error(err);
+        alert("❌ Failed to load batches.");
+      }
+    });
+
+    // ✅ Step 3: Play video
+    function playVideo(url) {
+      playerSection.classList.remove("hidden");
 
       if (Hls.isSupported()) {
         const hls = new Hls();
-        hls.loadSource(proxiedUrl);
+        hls.loadSource(url);
         hls.attachMedia(video);
-        hls.on(Hls.Events.MANIFEST_PARSED, function () {
-          video.play();
-        });
-      } else if (video.canPlayType("application/vnd.apple.mpegurl")) {
-        video.src = proxiedUrl;
-        video.addEventListener("loadedmetadata", () => {
-          video.play();
-        });
+      } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
+        video.src = url;
       } else {
-        alert("Your browser does not support HLS playback.");
+        alert("Your browser does not support HLS.");
       }
     }
   </script>
+
 </body>
 </html>
