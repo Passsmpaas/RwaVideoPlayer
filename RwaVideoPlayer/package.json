@@ -2,6 +2,7 @@
   "name": "RwaVideoPlayer",
   "version": "1.0.0",
   "main": "server.js",
+  "type": "module",
   "scripts": {
     "start": "node server.js"
   },
@@ -9,6 +10,7 @@
     "express": "^4.18.2",
     "request": "^2.88.2",
     "morgan": "^1.10.0",
-    "dotenv": "^16.0.3"
+    "dotenv": "^16.0.3",
+    "node-fetch": "^3.3.2"
   }
 }
