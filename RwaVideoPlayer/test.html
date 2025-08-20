@@ -19,9 +19,11 @@
 
   <h1 class="text-3xl font-bold mb-6 text-green-400">🎬 RWA Video Dashboard</h1>
 
-  <!-- Step 1: Enter Token -->
+  <!-- Step 1: Enter Token + UserID -->
   <div id="loginSection" class="mb-6 flex flex-col sm:flex-row items-center gap-3">
     <input id="tokenInput" type="text" placeholder="Enter your login token"
+           class="p-2 w-80 rounded border border-green-400 text-black focus:ring-2 focus:ring-green-500 outline-none">
+    <input id="useridInput" type="text" placeholder="Enter your UserID"
            class="p-2 w-80 rounded border border-green-400 text-black focus:ring-2 focus:ring-green-500 outline-none">
     <button id="loadBatches"
             class="bg-green-500 hover:bg-green-600 px-4 py-2 rounded-lg font-semibold transition">
@@ -62,18 +64,21 @@
     const video = document.getElementById("video");
     const spinner = document.getElementById("loadingSpinner");
 
-    // ✅ Step 1: User enters token
     loadBtn.addEventListener("click", async () => {
       const token = document.getElementById("tokenInput").value.trim();
-      if (!token) return alert("⚠ Please enter a valid token");
+      const userid = document.getElementById("useridInput").value.trim();
 
-      spinner.classList.remove("hidden"); 
+      if (!token || !userid) return alert("⚠ Please enter both Token and UserID");
+
+      spinner.classList.remove("hidden");
       batchSection.classList.add("hidden");
       batchList.innerHTML = "";
 
       try {
         const res = await fetch("/api/batches", {
-          headers: { "Authorization": `Bearer ${token}` }
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ token, userid })
         });
 
         if (!res.ok) throw new Error(`Server responded with ${res.status}`);
@@ -81,19 +86,18 @@
 
         spinner.classList.add("hidden");
 
-        if (!data.batches || data.batches.length === 0) {
+        if (!data.data || !data.data.length) {
           batchList.innerHTML = `<p class="text-red-400">❌ No batches found.</p>`;
           batchSection.classList.remove("hidden");
           return;
         }
 
-        // ✅ Step 2: Show batches
         batchSection.classList.remove("hidden");
-        data.batches.forEach(batch => {
+        data.data.forEach(batch => {
           const li = document.createElement("li");
           li.className = "p-4 bg-gray-800 rounded-lg cursor-pointer hover:bg-green-600 transition";
-          li.innerText = batch.name;
-          li.onclick = () => playVideo(batch.streamUrl);
+          li.innerText = batch.courseName || batch.name || "Unnamed Batch";
+          li.onclick = () => playVideo(batch.streamUrl || "");
           batchList.appendChild(li);
         });
 
@@ -104,8 +108,8 @@
       }
     });
 
-    // ✅ Step 3: Play video
     function playVideo(url) {
+      if (!url) return alert("❌ No video stream URL available");
       playerSection.classList.remove("hidden");
 
       if (Hls.isSupported()) {
@@ -119,6 +123,6 @@
       }
     }
   </script>
-
 </body>
-</html>
+  </html>
+  
