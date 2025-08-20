@@ -10,10 +10,7 @@ const PORT = process.env.PORT || 10000;
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// Middleware to parse JSON body (for POST requests)
 app.use(express.json());
-
-// Serve static files
 app.use(express.static(__dirname));
 
 // ✅ Serve test.html on root "/"
@@ -21,7 +18,7 @@ app.get("/", (req, res) => {
   res.sendFile(path.join(__dirname, "test.html"));
 });
 
-// ✅ API route to fetch batches (using real RWA API)
+// ✅ API route to fetch batches
 app.post("/api/batches", async (req, res) => {
   const { token, userid } = req.body;
 
@@ -30,7 +27,6 @@ app.post("/api/batches", async (req, res) => {
   }
 
   try {
-    // 🔹 Call the real RWA API
     const response = await fetch(
       "https://api.classplusapp.com/v2/course/get/get_all_purchases",
       {
@@ -38,23 +34,22 @@ app.post("/api/batches", async (req, res) => {
         headers: {
           "Content-Type": "application/json",
           "authorization": token,
-          "client-id": "1",   // yeh wahi h jo rwaxug site use karta hai
+          "client-id": "1",
         },
-        body: JSON.stringify({ userId: userid })
+        body: JSON.stringify({ userId: userid }),
       }
     );
 
     const data = await response.json();
 
-    // Agar API se error aaya
     if (!response.ok) {
       return res.status(response.status).json({
         error: "Failed to fetch from RWA API",
-        details: data
+        details: data,
       });
     }
 
-    res.json(data); // ✅ Frontend ko same response bhej dena
+    res.json(data);
   } catch (err) {
     console.error("❌ Error fetching batches:", err);
     res.status(500).json({ error: "Internal server error" });
