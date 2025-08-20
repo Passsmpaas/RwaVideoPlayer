@@ -6,46 +6,57 @@ import { fileURLToPath } from "url";
 const app = express();
 const PORT = process.env.PORT || 10000;
 
-// Path setup (for ES module support)
+// Path setup
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
+// Middleware
 app.use(express.json());
 app.use(express.static(__dirname));
 
-// ✅ Serve test.html on root "/"
+// ✅ Serve frontend
 app.get("/", (req, res) => {
   res.sendFile(path.join(__dirname, "test.html"));
 });
 
-// ✅ API route to fetch batches
-app.post("/api/batches", async (req, res) => {
-  const { token, userid } = req.body;
+// ✅ API Endpoints mapping (from appx v1–v4 .py files)
+const APPX_ENDPOINTS = {
+  v1: "https://api.appx.one/v1/course/get/get_all_purchases",
+  v2: "https://api.appx.one/v2/course/get/get_all_purchases",
+  v3: "https://api.appx.one/v3/course/get/get_all_purchases",
+  v4: "https://api.appx.one/v4/course/get/get_all_purchases"
+};
 
-  if (!token || !userid) {
-    return res.status(400).json({ error: "Token and UserID are required" });
+// ✅ Fetch Batches Route
+app.post("/api/batches", async (req, res) => {
+  const { token, userid, version } = req.body;
+
+  if (!token || !userid || !version) {
+    return res.status(400).json({ error: "Token, UserID and Version are required" });
+  }
+
+  const endpoint = APPX_ENDPOINTS[version];
+  if (!endpoint) {
+    return res.status(400).json({ error: "Invalid API version selected" });
   }
 
   try {
-    const response = await fetch(
-      "https://api.classplusapp.com/v2/course/get/get_all_purchases",
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "authorization": token,
-          "client-id": "1",
-        },
-        body: JSON.stringify({ userId: userid }),
-      }
-    );
+    const response = await fetch(endpoint, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "authorization": token,
+        "client-id": "1" // ✅ ye header appx .py se confirm karna hoga
+      },
+      body: JSON.stringify({ userId: userid })
+    });
 
     const data = await response.json();
 
     if (!response.ok) {
       return res.status(response.status).json({
-        error: "Failed to fetch from RWA API",
-        details: data,
+        error: "Failed to fetch from AppX API",
+        details: data
       });
     }
 
