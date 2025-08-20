@@ -17,14 +17,14 @@
 </head>
 <body class="flex flex-col items-center justify-start min-h-screen p-6">
 
-  <h1 class="text-3xl font-bold mb-6">🎬 RWA Video Dashboard</h1>
+  <h1 class="text-3xl font-bold mb-6 text-green-400">🎬 RWA Video Dashboard</h1>
 
   <!-- Step 1: Enter Token -->
-  <div id="loginSection" class="mb-6">
+  <div id="loginSection" class="mb-6 flex flex-col sm:flex-row items-center gap-3">
     <input id="tokenInput" type="text" placeholder="Enter your login token"
-           class="p-2 w-80 rounded border border-green-400 text-black">
+           class="p-2 w-80 rounded border border-green-400 text-black focus:ring-2 focus:ring-green-500 outline-none">
     <button id="loadBatches"
-            class="ml-2 bg-green-500 hover:bg-green-600 px-4 py-2 rounded-lg font-semibold">
+            class="bg-green-500 hover:bg-green-600 px-4 py-2 rounded-lg font-semibold transition">
       🔑 Load Batches
     </button>
   </div>
@@ -78,7 +78,7 @@
         batchSection.classList.remove("hidden");
         data.batches.forEach(batch => {
           const li = document.createElement("li");
-          li.className = "p-4 bg-gray-800 rounded-lg cursor-pointer hover:bg-green-600";
+          li.className = "p-4 bg-gray-800 rounded-lg cursor-pointer hover:bg-green-600 transition";
           li.innerText = batch.name;
           li.onclick = () => playVideo(batch.streamUrl);
           batchList.appendChild(li);
@@ -107,4 +107,4 @@
   </script>
 
 </body>
-    </html>
+</html>
