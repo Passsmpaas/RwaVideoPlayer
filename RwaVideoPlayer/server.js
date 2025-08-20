@@ -10,7 +10,10 @@ const PORT = process.env.PORT || 10000;
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// Serve static files (if needed later)
+// Middleware to parse JSON body (for POST requests)
+app.use(express.json());
+
+// Serve static files
 app.use(express.static(__dirname));
 
 // ✅ Serve test.html on root "/"
@@ -18,28 +21,46 @@ app.get("/", (req, res) => {
   res.sendFile(path.join(__dirname, "test.html"));
 });
 
-// ✅ API route to fetch batches (demo for now)
-app.get("/api/batches", async (req, res) => {
-  const token = req.headers["authorization"]?.split(" ")[1];
-  if (!token) return res.status(401).json({ error: "No token provided" });
+// ✅ API route to fetch batches (using real RWA API)
+app.post("/api/batches", async (req, res) => {
+  const { token, userid } = req.body;
+
+  if (!token || !userid) {
+    return res.status(400).json({ error: "Token and UserID are required" });
+  }
 
   try {
-    // 🔹 Demo response (later replace with actual RWA API call)
-    const data = {
-      batches: [
-        { name: "Batch 1 - Maths", streamUrl: "https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8" },
-        { name: "Batch 2 - Science", streamUrl: "https://moctv.live/hls/moctv.m3u8" }
-      ]
-    };
+    // 🔹 Call the real RWA API
+    const response = await fetch(
+      "https://api.classplusapp.com/v2/course/get/get_all_purchases",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "authorization": token,
+          "client-id": "1",   // yeh wahi h jo rwaxug site use karta hai
+        },
+        body: JSON.stringify({ userId: userid })
+      }
+    );
 
-    res.json(data);
+    const data = await response.json();
+
+    // Agar API se error aaya
+    if (!response.ok) {
+      return res.status(response.status).json({
+        error: "Failed to fetch from RWA API",
+        details: data
+      });
+    }
+
+    res.json(data); // ✅ Frontend ko same response bhej dena
   } catch (err) {
     console.error("❌ Error fetching batches:", err);
-    res.status(500).json({ error: "Failed to fetch batches" });
+    res.status(500).json({ error: "Internal server error" });
   }
 });
 
 app.listen(PORT, () => {
   console.log(`✅ Server running on http://localhost:${PORT}`);
 });
-  
