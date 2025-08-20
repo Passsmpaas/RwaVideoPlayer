@@ -19,14 +19,21 @@
 
   <h1 class="text-3xl font-bold mb-6 text-green-400">🎬 RWA Video Dashboard</h1>
 
-  <!-- Step 1: Enter Token + UserID -->
+  <!-- Step 1: Enter Details -->
   <div id="loginSection" class="mb-6 flex flex-col sm:flex-row items-center gap-3">
     <input id="tokenInput" type="text" placeholder="Enter your login token"
-           class="p-2 w-80 rounded border border-green-400 text-black focus:ring-2 focus:ring-green-500 outline-none">
-    <input id="useridInput" type="text" placeholder="Enter your UserID"
-           class="p-2 w-80 rounded border border-green-400 text-black focus:ring-2 focus:ring-green-500 outline-none">
+           class="p-2 w-80 rounded border border-green-400 text-black">
+    <input id="useridInput" type="text" placeholder="Enter your User ID"
+           class="p-2 w-60 rounded border border-green-400 text-black">
+    <select id="versionSelect" class="p-2 rounded border border-green-400 text-black">
+      <option value="">Select Version</option>
+      <option value="v1">AppX v1</option>
+      <option value="v2">AppX v2</option>
+      <option value="v3">AppX v3</option>
+      <option value="v4">AppX v4</option>
+    </select>
     <button id="loadBatches"
-            class="bg-green-500 hover:bg-green-600 px-4 py-2 rounded-lg font-semibold transition">
+            class="bg-green-500 hover:bg-green-600 px-4 py-2 rounded-lg font-semibold">
       🔑 Load Batches
     </button>
   </div>
@@ -67,8 +74,11 @@
     loadBtn.addEventListener("click", async () => {
       const token = document.getElementById("tokenInput").value.trim();
       const userid = document.getElementById("useridInput").value.trim();
+      const version = document.getElementById("versionSelect").value;
 
-      if (!token || !userid) return alert("⚠ Please enter both Token and UserID");
+      if (!token || !userid || !version) {
+        return alert("⚠ Please enter Token, UserID and select Version");
+      }
 
       spinner.classList.remove("hidden");
       batchSection.classList.add("hidden");
@@ -78,26 +88,26 @@
         const res = await fetch("/api/batches", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ token, userid })
+          body: JSON.stringify({ token, userid, version })
         });
 
         if (!res.ok) throw new Error(`Server responded with ${res.status}`);
         const data = await res.json();
-
         spinner.classList.add("hidden");
 
-        if (!data.data || !data.data.length) {
+        if (!data.batches || data.batches.length === 0) {
           batchList.innerHTML = `<p class="text-red-400">❌ No batches found.</p>`;
           batchSection.classList.remove("hidden");
           return;
         }
 
+        // ✅ Show batches
         batchSection.classList.remove("hidden");
-        data.data.forEach(batch => {
+        data.batches.forEach(batch => {
           const li = document.createElement("li");
           li.className = "p-4 bg-gray-800 rounded-lg cursor-pointer hover:bg-green-600 transition";
-          li.innerText = batch.courseName || batch.name || "Unnamed Batch";
-          li.onclick = () => playVideo(batch.streamUrl || "");
+          li.innerText = batch.name;
+          li.onclick = () => playVideo(batch.streamUrl);
           batchList.appendChild(li);
         });
 
@@ -109,9 +119,7 @@
     });
 
     function playVideo(url) {
-      if (!url) return alert("❌ No video stream URL available");
       playerSection.classList.remove("hidden");
-
       if (Hls.isSupported()) {
         const hls = new Hls();
         hls.loadSource(url);
@@ -123,6 +131,6 @@
       }
     }
   </script>
+
 </body>
-  </html>
-  
+</html>
