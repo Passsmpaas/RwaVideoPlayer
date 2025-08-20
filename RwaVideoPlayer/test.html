@@ -29,7 +29,7 @@
     </button>
   </div>
 
-  <!-- Spinner (hidden by default) -->
+  <!-- Spinner -->
   <div id="loadingSpinner" class="hidden flex items-center gap-2 text-green-400 mb-6">
     <svg class="animate-spin h-6 w-6 text-green-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
       <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
@@ -67,7 +67,7 @@
       const token = document.getElementById("tokenInput").value.trim();
       if (!token) return alert("⚠ Please enter a valid token");
 
-      spinner.classList.remove("hidden"); // Show spinner
+      spinner.classList.remove("hidden"); 
       batchSection.classList.add("hidden");
       batchList.innerHTML = "";
 
@@ -76,12 +76,10 @@
           headers: { "Authorization": `Bearer ${token}` }
         });
 
-        if (!res.ok) {
-          throw new Error(`Server responded with ${res.status}`);
-        }
-
+        if (!res.ok) throw new Error(`Server responded with ${res.status}`);
         const data = await res.json();
-        spinner.classList.add("hidden"); // Hide spinner
+
+        spinner.classList.add("hidden");
 
         if (!data.batches || data.batches.length === 0) {
           batchList.innerHTML = `<p class="text-red-400">❌ No batches found.</p>`;
@@ -101,7 +99,7 @@
 
       } catch (err) {
         console.error("❌ Error:", err);
-        spinner.classList.add("hidden"); // Hide spinner on error
+        spinner.classList.add("hidden");
         alert("❌ Failed to load batches. Check console for details.");
       }
     });
@@ -123,5 +121,4 @@
   </script>
 
 </body>
-  </html>
-  
+</html>
