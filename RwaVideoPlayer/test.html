@@ -13,6 +13,7 @@
       box-shadow: 0px 0px 20px rgba(34,197,94,0.5);
     }
     video { width: 100%; height: auto; display: block; background: black; }
+    .quality-select { margin-top: 8px; padding: 4px; border-radius: 5px; border: 1px solid #22c55e; color: black; }
   </style>
 </head>
 <body class="flex flex-col items-center justify-start min-h-screen p-6">
@@ -59,10 +60,10 @@
     <h2 class="text-xl font-semibold mb-3">▶ Selected Video</h2>
     <div class="video-container">
       <video id="video" controls></video>
+      <select id="qualitySelect" class="quality-select hidden"></select>
     </div>
   </div>
 
-  <!-- HLS.js -->
   <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
   <script>
     const loadBtn = document.getElementById("loadBatches");
@@ -73,10 +74,13 @@
     const subjectList = document.getElementById("subjectList");
     const video = document.getElementById("video");
     const spinner = document.getElementById("loadingSpinner");
+    const qualitySelect = document.getElementById("qualitySelect");
 
     let selectedInstitute = "";
     let token = "";
     let userid = "";
+    let hls = null;
+    let currentSources = [];
 
     loadBtn.addEventListener("click", async () => {
       token = document.getElementById("tokenInput").value.trim();
@@ -167,6 +171,8 @@
       spinner.classList.remove("hidden");
       playerSection.classList.add("hidden");
       video.src = "";
+      qualitySelect.innerHTML = "";
+      qualitySelect.classList.add("hidden");
 
       try {
         const res = await fetch("/api/topics", {
@@ -183,10 +189,12 @@
           return;
         }
 
-        // Play first video by default
-        const firstVideoUrl = topics[0].download_link;
-        if (!firstVideoUrl) return alert("❌ No download link for first video.");
-        playVideo(firstVideoUrl);
+        const firstTopic = topics[0];
+        if (!firstTopic.videos || firstTopic.videos.length === 0) return alert("❌ No video links found.");
+
+        currentSources = firstTopic.videos; // array of {quality: "720p", url: "..."}
+        populateQualityDropdown(currentSources);
+        playVideo(currentSources[0].url);
 
       } catch (err) {
         console.error("❌ Error loading topics:", err);
@@ -195,19 +203,25 @@
       }
     }
 
+    function populateQualityDropdown(sources) {
+      qualitySelect.innerHTML = "";
+      sources.forEach(src => {
+        const option = document.createElement("option");
+        option.value = src.url;
+        option.text = src.quality || "Auto";
+        qualitySelect.appendChild(option);
+      });
+      qualitySelect.classList.remove("hidden");
+      qualitySelect.onchange = () => playVideo(qualitySelect.value);
+    }
+
     function playVideo(url) {
       playerSection.classList.remove("hidden");
-      if (Hls.isSupported()) {
-        const hls = new Hls();
-        hls.loadSource(url);
-        hls.attachMedia(video);
-      } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
-        video.src = url;
-      } else {
-        alert("Your browser does not support HLS.");
-      }
+      if (hls) { hls.destroy(); }
+      hls = new Hls();
+      hls.loadSource(url);
+      hls.attachMedia(video);
     }
   </script>
 </body>
-  </html>
-  
+</html>
