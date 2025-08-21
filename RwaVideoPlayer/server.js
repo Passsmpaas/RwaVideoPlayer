@@ -92,6 +92,8 @@ app.post("/api/topics", async (req, res) => {
       const possibleLinks = [];
       if (topic.download_link) possibleLinks.push(topic.download_link);
       if (topic.file_url) possibleLinks.push(topic.file_url);
+      if (topic.stream_url) possibleLinks.push(topic.stream_url);
+      if (topic.videopath) possibleLinks.push(topic.videopath);
       if (topic.bitrate_urls && Array.isArray(topic.bitrate_urls)) {
         topic.bitrate_urls.forEach((b) => possibleLinks.push(b.url || b.link));
       }
@@ -100,6 +102,8 @@ app.post("/api/topics", async (req, res) => {
       const validLinks = possibleLinks.filter(
         (u) => u && u.includes("transcoded-videos.securevideo.in") && !u.includes("drm")
       );
+
+      console.log("🎥 Valid links for", topic.topic_name, ":", validLinks);
 
       // make resolution objects
       validLinks.forEach((u) => {
