@@ -1,128 +1,188 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>🎬 RWA Video Dashboard</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <script src="https://cdn.tailwindcss.com"></script>
-  <style>
-    body { background: #0d0d0d; color: white; font-family: 'Segoe UI', sans-serif; }
-    .video-container { position: relative; width: 100%; max-width: 900px; margin: auto;
-      border: 2px solid #22c55e; border-radius: 15px; overflow: hidden;
-      box-shadow: 0px 0px 20px rgba(34,197,94,0.5);
-    }
-    video { width: 100%; height: auto; display: block; background: black; }
-    .clickable:hover { cursor: pointer; background-color: #16a34a; transition: 0.3s; }
-  </style>
+<meta charset="UTF-8">
+<title>🧑‍💻𝐌𝐫𝐒𝐭𝐫𝐚𝐧𝐠𝐞𝐫™</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<script src="https://cdn.tailwindcss.com"></script>
+<style>
+  body { background: #0d0d0d; color: white; font-family: 'Segoe UI', sans-serif; }
+  .video-container { position: relative; width: 100%; max-width: 900px; margin: auto;
+    border: 2px solid #22c55e; border-radius: 15px; overflow: hidden;
+    box-shadow: 0px 0px 20px rgba(34,197,94,0.5);
+  }
+  video { width: 100%; height: auto; display: block; background: black; }
+  .clickable:hover { cursor: pointer; background-color: #16a34a; transition: 0.3s; }
+</style>
 </head>
 <body class="flex flex-col items-center justify-start min-h-screen p-6">
 
-  <h1 class="text-3xl font-bold mb-6 text-green-400">🎬 RWA Video Dashboard</h1>
+<h1 class="text-3xl font-bold mb-6 text-green-400">🎬 RWA Video Dashboard</h1>
 
-  <!-- Login Section -->
-  <div id="loginSection" class="mb-6 flex flex-col sm:flex-row items-center gap-3">
-    <input id="insInput" type="text" placeholder="Enter Institute (e.g., rozgarapinew.teachx.in)"
-           class="p-2 w-80 rounded border border-green-400 text-black">
-    <input id="useridInput" type="text" placeholder="Enter User ID"
-           class="p-2 w-60 rounded border border-green-400 text-black">
-    <input id="tokenInput" type="text" placeholder="Enter Token"
-           class="p-2 w-60 rounded border border-green-400 text-black">
-    <button id="loadBatches"
-            class="bg-green-500 hover:bg-green-600 px-4 py-2 rounded-lg font-semibold">
-      🔑 Load Batches
-    </button>
+<!-- Login Section -->
+<div id="loginSection" class="mb-6 flex flex-col sm:flex-row items-center gap-3">
+  <input id="insInput" type="text" placeholder="Institute (e.g., rozgarapinew.teachx.in)"
+         class="p-2 w-80 rounded border border-green-400 text-black">
+  <input id="useridInput" type="text" placeholder="User ID"
+         class="p-2 w-60 rounded border border-green-400 text-black">
+  <input id="tokenInput" type="text" placeholder="Token"
+         class="p-2 w-60 rounded border border-green-400 text-black">
+  <button id="loadBatches" class="bg-green-500 hover:bg-green-600 px-4 py-2 rounded-lg font-semibold">
+    🔑 Load Batches
+  </button>
+</div>
+
+<div id="loadingSpinner" class="hidden flex items-center gap-2 text-green-400 mb-6">
+  <svg class="animate-spin h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4l3-3-3-3v4a12 12 0 00-12 12h4z"></path>
+  </svg>
+  <span>Loading...</span>
+</div>
+
+<!-- Batches -->
+<div id="batchSection" class="hidden mb-6 w-full max-w-3xl">
+  <h2 class="text-xl font-semibold mb-3">📂 Your Batches</h2>
+  <ul id="batchList" class="grid grid-cols-1 sm:grid-cols-2 gap-4"></ul>
+</div>
+
+<!-- Subjects -->
+<div id="subjectSection" class="hidden mb-6 w-full max-w-3xl">
+  <h2 class="text-xl font-semibold mb-3">📚 Subjects</h2>
+  <ul id="subjectList" class="grid grid-cols-1 sm:grid-cols-2 gap-4"></ul>
+</div>
+
+<!-- Topics -->
+<div id="topicSection" class="hidden mb-6 w-full max-w-3xl">
+  <h2 class="text-xl font-semibold mb-3">📝 Topics</h2>
+  <ul id="topicList" class="grid grid-cols-1 sm:grid-cols-2 gap-4"></ul>
+</div>
+
+<!-- Video Player -->
+<div id="playerSection" class="hidden w-full max-w-3xl">
+  <h2 class="text-xl font-semibold mb-3">▶ Selected Video</h2>
+  <div class="video-container">
+    <video id="video" controls></video>
   </div>
+</div>
 
-  <!-- Spinner -->
-  <div id="loadingSpinner" class="hidden flex items-center gap-2 text-green-400 mb-6">
-    <svg class="animate-spin h-6 w-6 text-green-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-      <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-      <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4l3-3-3-3v4a12 12 0 00-12 12h4z"></path>
-    </svg>
-    <span>Loading...</span>
-  </div>
+<script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+<script>
+const loadBtn = document.getElementById("loadBatches");
+const spinner = document.getElementById("loadingSpinner");
+const batchSection = document.getElementById("batchSection");
+const batchList = document.getElementById("batchList");
+const subjectSection = document.getElementById("subjectSection");
+const subjectList = document.getElementById("subjectList");
+const topicSection = document.getElementById("topicSection");
+const topicList = document.getElementById("topicList");
+const playerSection = document.getElementById("playerSection");
+const video = document.getElementById("video");
 
-  <!-- Batches -->
-  <div id="batchSection" class="hidden mb-6 w-full max-w-3xl">
-    <h2 class="text-xl font-semibold mb-3">📂 Your Batches</h2>
-    <ul id="batchList" class="grid grid-cols-1 sm:grid-cols-2 gap-4"></ul>
-  </div>
+loadBtn.addEventListener("click", async () => {
+  const ins = document.getElementById("insInput").value.trim();
+  const userid = document.getElementById("useridInput").value.trim();
+  const token = document.getElementById("tokenInput").value.trim();
+  if (!ins || !userid || !token) return alert("⚠ Please enter all fields");
 
-  <!-- Video Player -->
-  <div id="playerSection" class="hidden w-full max-w-3xl">
-    <h2 class="text-xl font-semibold mb-3">▶ Selected Video</h2>
-    <div class="video-container">
-      <video id="video" controls></video>
-    </div>
-  </div>
+  spinner.classList.remove("hidden");
+  batchSection.classList.add("hidden");
+  subjectSection.classList.add("hidden");
+  topicSection.classList.add("hidden");
+  batchList.innerHTML = "";
+  subjectList.innerHTML = "";
+  topicList.innerHTML = "";
 
-  <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
-  <script>
-    const loadBtn = document.getElementById("loadBatches");
-    const batchSection = document.getElementById("batchSection");
-    const batchList = document.getElementById("batchList");
-    const playerSection = document.getElementById("playerSection");
-    const video = document.getElementById("video");
-    const spinner = document.getElementById("loadingSpinner");
+  try {
+    const res = await fetch("/api/batches", {
+      method: "POST",
+      headers: {"Content-Type": "application/json"},
+      body: JSON.stringify({ ins, userid, token })
+    });
+    const data = await res.json();
+    spinner.classList.add("hidden");
 
-    loadBtn.addEventListener("click", async () => {
-      const ins = document.getElementById("insInput").value.trim();
-      const userid = document.getElementById("useridInput").value.trim();
-      const token = document.getElementById("tokenInput").value.trim();
+    if (!data.batches.length) return alert("❌ No batches found");
 
-      if (!ins || !userid || !token) return alert("⚠ Please enter Institute, UserID, and Token");
-
-      spinner.classList.remove("hidden");
-      batchSection.classList.add("hidden");
-      batchList.innerHTML = "";
-
-      try {
-        const res = await fetch("/api/batches", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ ins, userid, token })
-        });
-
-        if (!res.ok) throw new Error(`Server responded with ${res.status}`);
-        const data = await res.json();
-        spinner.classList.add("hidden");
-
-        if (!data.batches || data.batches.length === 0) {
-          batchList.innerHTML = `<p class="text-red-400">❌ No batches found.</p>`;
-          batchSection.classList.remove("hidden");
-          return;
-        }
-
-        batchSection.classList.remove("hidden");
-        data.batches.forEach(batch => {
-          const li = document.createElement("li");
-          li.className = "p-4 bg-gray-800 rounded-lg clickable";
-          li.innerText = batch.name;
-          li.onclick = () => alert(`Selected Batch ID: ${batch.id}`);
-          batchList.appendChild(li);
-        });
-
-      } catch (err) {
-        console.error(err);
-        spinner.classList.add("hidden");
-        alert("❌ Failed to load batches. Check console.");
-      }
+    batchSection.classList.remove("hidden");
+    data.batches.forEach(batch => {
+      const li = document.createElement("li");
+      li.className = "p-4 bg-gray-800 rounded-lg clickable";
+      li.innerText = batch.name;
+      li.onclick = () => loadSubjects(batch.id);
+      batchList.appendChild(li);
     });
 
-    function playVideo(url) {
-      playerSection.classList.remove("hidden");
-      if (Hls.isSupported()) {
-        const hls = new Hls();
-        hls.loadSource(url);
-        hls.attachMedia(video);
-      } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
-        video.src = url;
-      } else {
-        alert("Your browser does not support HLS.");
-      }
-    }
-  </script>
+  } catch (err) { console.error(err); spinner.classList.add("hidden"); alert("❌ Failed to load batches"); }
+});
+
+async function loadSubjects(courseid) {
+  const ins = document.getElementById("insInput").value.trim();
+  const userid = document.getElementById("useridInput").value.trim();
+  const token = document.getElementById("tokenInput").value.trim();
+
+  spinner.classList.remove("hidden");
+  subjectList.innerHTML = "";
+  topicList.innerHTML = "";
+  topicSection.classList.add("hidden");
+  subjectSection.classList.remove("hidden");
+
+  const res = await fetch("/api/subjects", {
+    method: "POST",
+    headers: {"Content-Type": "application/json"},
+    body: JSON.stringify({ ins, userid, token, courseid })
+  });
+  const data = await res.json();
+  spinner.classList.add("hidden");
+
+  data.subjects.forEach(sub => {
+    const li = document.createElement("li");
+    li.className = "p-4 bg-gray-800 rounded-lg clickable";
+    li.innerText = sub.subject_name || sub.name || "Unknown";
+    li.onclick = () => loadTopics(courseid, sub.subjectid);
+    subjectList.appendChild(li);
+  });
+}
+
+async function loadTopics(courseid, subjectid) {
+  const ins = document.getElementById("insInput").value.trim();
+  const userid = document.getElementById("useridInput").value.trim();
+  const token = document.getElementById("tokenInput").value.trim();
+
+  spinner.classList.remove("hidden");
+  topicList.innerHTML = "";
+  topicSection.classList.remove("hidden");
+
+  const res = await fetch("/api/topics", {
+    method: "POST",
+    headers: {"Content-Type": "application/json"},
+    body: JSON.stringify({ ins, userid, token, courseid, subjectid })
+  });
+  const data = await res.json();
+  spinner.classList.add("hidden");
+
+  data.topics.forEach(t => {
+    const li = document.createElement("li");
+    li.className = "p-4 bg-gray-800 rounded-lg clickable";
+    li.innerText = t.topic_name;
+    li.onclick = () => playVideo(t.download_link);
+    topicList.appendChild(li);
+  });
+}
+
+function playVideo(url) {
+  if (!url) return alert("No video link available");
+  playerSection.classList.remove("hidden");
+  if (Hls.isSupported()) {
+    const hls = new Hls();
+    hls.loadSource(url);
+    hls.attachMedia(video);
+  } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
+    video.src = url;
+  } else alert("Your browser does not support HLS");
+}
+</script>
 
 </body>
-  </html>
+      </html>
   
