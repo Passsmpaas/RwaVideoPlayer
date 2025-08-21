@@ -35,7 +35,8 @@ function buildHeaders(ins, userid, token) {
 app.post("/api/batches", async (req, res) => {
   try {
     const { ins, userid, token } = req.body;
-    if (!ins || !userid || !token) return res.status(400).json({ error: "Institute, UserID, and Token required" });
+    if (!ins || !userid || !token)
+      return res.status(400).json({ error: "Institute, UserID, and Token required" });
 
     const hdr = buildHeaders(ins, userid, token);
     const response = await fetch(`https://${ins}/get/mycourse?userid=${userid}`, { headers: hdr });
@@ -52,10 +53,14 @@ app.post("/api/batches", async (req, res) => {
 app.post("/api/subjects", async (req, res) => {
   try {
     const { ins, userid, token, courseid } = req.body;
-    if (!ins || !userid || !token || !courseid) return res.status(400).json({ error: "Institute, UserID, Token, and CourseID required" });
+    if (!ins || !userid || !token || !courseid)
+      return res.status(400).json({ error: "Institute, UserID, Token, and CourseID required" });
 
     const hdr = buildHeaders(ins, userid, token);
-    const response = await fetch(`https://${ins}/get/allsubjectfrmlivecourseclass?courseid=${courseid}`, { headers: hdr });
+    const response = await fetch(
+      `https://${ins}/get/allsubjectfrmlivecourseclass?courseid=${courseid}`,
+      { headers: hdr }
+    );
     const data = await response.json();
     if (!data.data) return res.status(404).json({ error: "No subjects found" });
     res.json(data.data);
@@ -65,7 +70,7 @@ app.post("/api/subjects", async (req, res) => {
   }
 });
 
-// Fetch Topics + Multiple Resolutions
+// Fetch Topics + Filter v2 transcoded links
 app.post("/api/topics", async (req, res) => {
   try {
     const { ins, userid, token, courseid, subjectid } = req.body;
@@ -81,17 +86,29 @@ app.post("/api/topics", async (req, res) => {
     if (!data.data) return res.status(404).json({ error: "No topics found" });
 
     const topics = data.data.map((topic) => {
-      // Collect multiple resolutions for each video
-      const videos = [];
-      if (topic.download_link) {
-        // Assuming the API returns links with resolutions in some format
-        const qualities = ["720p", "480p", "360p"]; // adjust according to real API
-        qualities.forEach((q) => {
-          videos.push({ resolution: q, url: topic.download_link.replace("720p", q) });
-        });
-      } else if (topic.pdf_link) {
-        videos.push({ resolution: "pdf", url: topic.pdf_link });
+      let videos = [];
+
+      // collect all possible links from API response
+      const possibleLinks = [];
+      if (topic.download_link) possibleLinks.push(topic.download_link);
+      if (topic.file_url) possibleLinks.push(topic.file_url);
+      if (topic.bitrate_urls && Array.isArray(topic.bitrate_urls)) {
+        topic.bitrate_urls.forEach((b) => possibleLinks.push(b.url || b.link));
       }
+
+      // filter only non-DRM transcoded v2 links
+      const validLinks = possibleLinks.filter(
+        (u) => u && u.includes("transcoded-videos.securevideo.in") && !u.includes("drm")
+      );
+
+      // make resolution objects
+      validLinks.forEach((u) => {
+        let resLabel = "Auto";
+        if (u.includes("720")) resLabel = "720p";
+        else if (u.includes("480")) resLabel = "480p";
+        else if (u.includes("360")) resLabel = "360p";
+        videos.push({ quality: resLabel, url: u });
+      });
 
       return {
         topicid: topic.topicid,
@@ -110,4 +127,3 @@ app.post("/api/topics", async (req, res) => {
 app.listen(PORT, () => {
   console.log(`✅ Server running on http://localhost:${PORT}`);
 });
-      
