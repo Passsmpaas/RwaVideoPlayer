@@ -2,9 +2,10 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>🧑‍💻MrStranger™</title>
+  <title>『 𝐌𝐑𝐒𝐓𝐑𝐀𝐍𝐆𝐄𝐑™ 』</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
   <style>
     body { background: #0d0d0d; color: white; font-family: 'Segoe UI', sans-serif; }
     .video-container {
@@ -14,57 +15,70 @@
     }
     video { width: 100%; height: auto; display: block; background: black; }
     .quality-select { margin-top: 8px; padding: 4px; border-radius: 5px; border: 1px solid #22c55e; color: black; }
+    .brand-header {
+      position: fixed; top: 0; left: 50%; transform: translateX(-50%);
+      background: #0d0d0d; padding: 12px 24px;
+      font-size: 1.8rem; font-weight: bold; color: #22c55e;
+      text-align: center; z-index: 50; border-bottom: 2px solid #22c55e;
+    }
+    .content {
+      margin-top: 80px; /* top space for fixed header */
+    }
   </style>
 </head>
 <body class="flex flex-col items-center justify-start min-h-screen p-6">
 
-  <h1 class="text-3xl font-bold mb-6 text-green-400">🎬 RWA Video Dashboard</h1>
+  <!-- Fixed Top Branding -->
+  <div class="brand-header">『 𝐌𝐑𝐒𝐓𝐑𝐀𝐍𝐆𝐄𝐑™ 』</div>
 
-  <!-- Step 1: Enter Details -->
-  <div id="loginSection" class="mb-6 flex flex-col sm:flex-row items-center gap-3">
-    <input id="tokenInput" type="text" placeholder="Enter your login token"
-           class="p-2 w-80 rounded border border-green-400 text-black">
-    <input id="useridInput" type="text" placeholder="Enter your User ID"
-           class="p-2 w-60 rounded border border-green-400 text-black">
-    <input id="insInput" type="text" placeholder="Enter Institute (e.g. rozgarapinew.teachx.in)"
-           class="p-2 w-80 rounded border border-green-400 text-black">
-    <button id="loadBatches"
-            class="bg-green-500 hover:bg-green-600 px-4 py-2 rounded-lg font-semibold">
-      🔑 Load Batches
-    </button>
-  </div>
+  <div class="content w-full flex flex-col items-center">
 
-  <!-- Spinner -->
-  <div id="loadingSpinner" class="hidden flex items-center gap-2 text-green-400 mb-6">
-    <svg class="animate-spin h-6 w-6 text-green-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-      <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-      <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4l3-3-3-3v4a12 12 0 00-12 12h4z"></path>
-    </svg>
-    <span>Loading batches...</span>
-  </div>
-
-  <!-- Step 2: Batch List -->
-  <div id="batchSection" class="hidden mb-6 w-full max-w-3xl">
-    <h2 class="text-xl font-semibold mb-3">📂 Your Batches</h2>
-    <ul id="batchList" class="grid grid-cols-1 sm:grid-cols-2 gap-4"></ul>
-  </div>
-
-  <!-- Step 3: Subject List -->
-  <div id="subjectSection" class="hidden mb-6 w-full max-w-3xl">
-    <h2 class="text-xl font-semibold mb-3">📝 Subjects</h2>
-    <ul id="subjectList" class="grid grid-cols-1 sm:grid-cols-2 gap-4"></ul>
-  </div>
-
-  <!-- Step 4: Video Player -->
-  <div id="playerSection" class="hidden w-full max-w-3xl">
-    <h2 class="text-xl font-semibold mb-3">▶ Selected Video</h2>
-    <div class="video-container">
-      <video id="video" controls></video>
-      <select id="qualitySelect" class="quality-select hidden"></select>
+    <!-- Step 1: Enter Details -->
+    <div id="loginSection" class="mb-6 flex flex-col sm:flex-row items-center gap-3">
+      <input id="tokenInput" type="text" placeholder="Enter your login token"
+             class="p-2 w-80 rounded border border-green-400 text-black">
+      <input id="useridInput" type="text" placeholder="Enter your User ID"
+             class="p-2 w-60 rounded border border-green-400 text-black">
+      <input id="insInput" type="text" placeholder="Enter Institute (e.g. rozgarapinew.teachx.in)"
+             class="p-2 w-80 rounded border border-green-400 text-black">
+      <button id="loadBatches"
+              class="bg-green-500 hover:bg-green-600 px-4 py-2 rounded-lg font-semibold">
+        🔑 Load Batches
+      </button>
     </div>
+
+    <!-- Spinner -->
+    <div id="loadingSpinner" class="hidden flex items-center gap-2 text-green-400 mb-6">
+      <svg class="animate-spin h-6 w-6 text-green-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4l3-3-3-3v4a12 12 0 00-12 12h4z"></path>
+      </svg>
+      <span>Loading...</span>
+    </div>
+
+    <!-- Step 2: Batch List -->
+    <div id="batchSection" class="hidden mb-6 w-full max-w-3xl">
+      <h2 class="text-xl font-semibold mb-3">📂 Your Batches</h2>
+      <ul id="batchList" class="grid grid-cols-1 sm:grid-cols-2 gap-4"></ul>
+    </div>
+
+    <!-- Step 3: Subject List -->
+    <div id="subjectSection" class="hidden mb-6 w-full max-w-3xl">
+      <h2 class="text-xl font-semibold mb-3">📝 Subjects</h2>
+      <ul id="subjectList" class="grid grid-cols-1 sm:grid-cols-2 gap-4"></ul>
+    </div>
+
+    <!-- Step 4: Video Player -->
+    <div id="playerSection" class="hidden w-full max-w-3xl">
+      <h2 class="text-xl font-semibold mb-3">▶ Selected Video</h2>
+      <div class="video-container">
+        <video id="video" controls></video>
+        <select id="qualitySelect" class="quality-select hidden"></select>
+      </div>
+    </div>
+
   </div>
 
-  <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
   <script>
     const loadBtn = document.getElementById("loadBatches");
     const batchSection = document.getElementById("batchSection");
@@ -103,7 +117,6 @@
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ ins: selectedInstitute, userid, token })
         });
-        if (!res.ok) throw new Error(`Server responded with ${res.status}`);
         const data = await res.json();
         spinner.classList.add("hidden");
 
@@ -125,7 +138,7 @@
       } catch (err) {
         console.error("❌ Error:", err);
         spinner.classList.add("hidden");
-        alert("❌ Failed to load batches. Check console for details.");
+        alert("❌ Failed to load batches.");
       }
     });
 
@@ -140,7 +153,6 @@
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ ins: selectedInstitute, userid, token, courseid })
         });
-        if (!res.ok) throw new Error(`Server responded with ${res.status}`);
         const data = await res.json();
         spinner.classList.add("hidden");
 
@@ -180,7 +192,6 @@
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ ins: selectedInstitute, userid, token, courseid, subjectid })
         });
-        if (!res.ok) throw new Error(`Server responded with ${res.status}`);
         const topics = await res.json();
         spinner.classList.add("hidden");
 
@@ -190,9 +201,10 @@
         }
 
         const firstTopic = topics[0];
-        if (!firstTopic.videos || firstTopic.videos.length === 0) return alert("❌ No video links found.");
+        if (!firstTopic.videos || firstTopic.videos.length === 0)
+          return alert("❌ No video links found.");
 
-        currentSources = firstTopic.videos; // array of {quality: "720p", url: "..."}
+        currentSources = firstTopic.videos;
         populateQualityDropdown(currentSources);
         playVideo(currentSources[0].url);
 
