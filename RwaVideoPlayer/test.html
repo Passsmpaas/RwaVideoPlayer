@@ -8,21 +8,55 @@
   <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
   <style>
     body { background: #0d0d0d; color: white; font-family: 'Segoe UI', sans-serif; }
+
     .video-container {
       position: relative; width: 100%; max-width: 900px; margin: auto;
       border: 2px solid #22c55e; border-radius: 15px; overflow: hidden;
-      box-shadow: 0px 0px 20px rgba(34,197,94,0.5);
+      box-shadow: 0px 0px 25px rgba(34,197,94,0.6);
     }
+
     video { width: 100%; height: auto; display: block; background: black; }
-    .quality-select { margin-top: 8px; padding: 4px; border-radius: 5px; border: 1px solid #22c55e; color: black; }
+
+    .quality-select {
+      margin-top: 8px; padding: 6px;
+      border-radius: 5px; border: 1px solid #22c55e;
+      color: black; font-weight: 600;
+    }
+
+    /* Fixed Top Branding */
     .brand-header {
       position: fixed; top: 0; left: 50%; transform: translateX(-50%);
-      background: #0d0d0d; padding: 12px 24px;
-      font-size: 1.8rem; font-weight: bold; color: #22c55e;
-      text-align: center; z-index: 50; border-bottom: 2px solid #22c55e;
+      background: linear-gradient(90deg, #16a34a, #0d0d0d);
+      padding: 14px 28px; font-size: 2rem;
+      font-weight: bold; color: #fff;
+      text-align: center; z-index: 50;
+      border-bottom: 2px solid #22c55e;
+      letter-spacing: 2px;
+      text-shadow: 0 0 10px rgba(34,197,94,0.8);
+      border-radius: 0 0 12px 12px;
     }
+
     .content {
-      margin-top: 80px; /* top space for fixed header */
+      margin-top: 100px; /* extra top space for fixed header */
+    }
+
+    /* Hover glow for cards */
+    .hover-card:hover {
+      background: #22c55e !important;
+      box-shadow: 0 0 15px rgba(34,197,94,0.7);
+      transform: scale(1.03);
+      transition: all 0.2s ease-in-out;
+    }
+
+    /* Fancy button hover */
+    .btn-green {
+      background: #22c55e;
+      transition: all 0.2s;
+    }
+    .btn-green:hover {
+      background: #16a34a;
+      box-shadow: 0 0 15px rgba(34,197,94,0.7);
+      transform: scale(1.05);
     }
   </style>
 </head>
@@ -42,7 +76,7 @@
       <input id="insInput" type="text" placeholder="Enter Institute (e.g. rozgarapinew.teachx.in)"
              class="p-2 w-80 rounded border border-green-400 text-black">
       <button id="loadBatches"
-              class="bg-green-500 hover:bg-green-600 px-4 py-2 rounded-lg font-semibold">
+              class="btn-green px-4 py-2 rounded-lg font-semibold">
         🔑 Load Batches
       </button>
     </div>
@@ -129,7 +163,7 @@
         batchSection.classList.remove("hidden");
         data.forEach(batch => {
           const li = document.createElement("li");
-          li.className = "p-4 bg-gray-800 rounded-lg cursor-pointer hover:bg-green-600 transition";
+          li.className = "p-4 bg-gray-800 rounded-lg cursor-pointer hover-card";
           li.innerText = batch.course_name || batch.name;
           li.onclick = () => loadSubjects(batch.id || batch.courseid);
           batchList.appendChild(li);
@@ -166,7 +200,7 @@
         data.forEach(sub => {
           const subID = sub.subjectid || sub.id;
           const li = document.createElement("li");
-          li.className = "p-4 bg-gray-700 rounded-lg cursor-pointer hover:bg-green-500 transition";
+          li.className = "p-4 bg-gray-700 rounded-lg cursor-pointer hover-card";
           li.innerText = sub.subject_name || sub.name;
           li.onclick = () => loadTopics(courseid, subID);
           subjectList.appendChild(li);
@@ -236,5 +270,5 @@
     }
   </script>
 </body>
-    </html>
+  </html>
   
