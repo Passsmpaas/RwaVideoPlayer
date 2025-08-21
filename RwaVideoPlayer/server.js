@@ -14,6 +14,7 @@ const __dirname = path.dirname(__filename);
 app.use(express.json());
 app.use(express.static(__dirname));
 
+// Serve frontend
 app.get("/", (req, res) => {
   res.sendFile(path.join(__dirname, "test.html"));
 });
@@ -32,50 +33,73 @@ function buildHeaders(ins, userid, token) {
   };
 }
 
-// Fetch Batches
+// ✅ Fetch Batches
 app.post("/api/batches", async (req, res) => {
   try {
     const { ins, userid, token } = req.body;
+    if (!ins || !userid || !token) {
+      return res.status(400).json({ error: "Institute, UserID, and Token required" });
+    }
+
     const hdr = buildHeaders(ins, userid, token);
     const response = await fetch(`https://${ins}/get/mycourse?userid=${userid}`, { headers: hdr });
     const data = await response.json();
-    const batches = data.data.map(b => ({ id: b.id, name: b.course_name }));
-    res.json({ batches });
+
+    if (!data.data) return res.status(404).json({ error: "No batches found" });
+    res.json(data.data);
+
   } catch (err) {
-    console.error(err);
+    console.error("❌ Error fetching batches:", err);
     res.status(500).json({ error: "Failed to fetch batches" });
   }
 });
 
-// Fetch Subjects
+// ✅ Fetch Subjects
 app.post("/api/subjects", async (req, res) => {
   try {
     const { ins, userid, token, courseid } = req.body;
+    if (!ins || !userid || !token || !courseid) {
+      return res.status(400).json({ error: "Institute, UserID, Token, and CourseID required" });
+    }
+
     const hdr = buildHeaders(ins, userid, token);
     const response = await fetch(`https://${ins}/get/allsubjectfrmlivecourseclass?courseid=${courseid}`, { headers: hdr });
     const data = await response.json();
-    res.json({ subjects: data.data });
+
+    if (!data.data) return res.status(404).json({ error: "No subjects found" });
+    res.json(data.data);
+
   } catch (err) {
-    console.error(err);
+    console.error("❌ Error fetching subjects:", err);
     res.status(500).json({ error: "Failed to fetch subjects" });
   }
 });
 
-// Fetch Topics
+// ✅ Fetch Topics + Download Links
 app.post("/api/topics", async (req, res) => {
   try {
     const { ins, userid, token, courseid, subjectid } = req.body;
+    if (!ins || !userid || !token || !courseid || !subjectid) {
+      return res.status(400).json({ error: "Institute, UserID, Token, CourseID, and SubjectID required" });
+    }
+
     const hdr = buildHeaders(ins, userid, token);
     const response = await fetch(`https://${ins}/get/alltopicfrmlivecourseclass?courseid=${courseid}&subjectid=${subjectid}`, { headers: hdr });
     const data = await response.json();
-    const topics = data.data.map(t => ({
-      topicid: t.topicid,
-      topic_name: t.topic_name,
-      download_link: t.download_link || t.pdf_link || null
+
+    if (!data.data) return res.status(404).json({ error: "No topics found" });
+
+    const topics = data.data.map(topic => ({
+      topicid: topic.topicid,
+      topic_name: topic.topic_name,
+      videos: topic.videos || [],
+      download_link: topic.download_link || topic.pdf_link || null
     }));
-    res.json({ topics });
+
+    res.json(topics);
+
   } catch (err) {
-    console.error(err);
+    console.error("❌ Error fetching topics:", err);
     res.status(500).json({ error: "Failed to fetch topics" });
   }
 });
