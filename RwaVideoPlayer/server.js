@@ -17,7 +17,7 @@ app.get("/", (req, res) => {
   res.sendFile(path.join(__dirname, "test.html"));
 });
 
-// Helper to build headers
+// Build headers
 function buildHeaders(ins, userid, token) {
   return {
     "Client-Service": "Appx",
@@ -42,6 +42,7 @@ app.post("/api/batches", async (req, res) => {
     const response = await fetch(`https://${ins}/get/mycourse?userid=${userid}`, { headers: hdr });
     const data = await response.json();
     if (!data.data) return res.status(404).json({ error: "No batches found" });
+
     res.json(data.data);
   } catch (err) {
     console.error("❌ Error fetching batches:", err);
@@ -63,6 +64,7 @@ app.post("/api/subjects", async (req, res) => {
     );
     const data = await response.json();
     if (!data.data) return res.status(404).json({ error: "No subjects found" });
+
     res.json(data.data);
   } catch (err) {
     console.error("❌ Error fetching subjects:", err);
@@ -70,7 +72,7 @@ app.post("/api/subjects", async (req, res) => {
   }
 });
 
-// Fetch Topics + Filter v2 transcoded links
+// Fetch Topics & Extract Non-DRM V2 Links
 app.post("/api/topics", async (req, res) => {
   try {
     const { ins, userid, token, courseid, subjectid } = req.body;
@@ -87,28 +89,34 @@ app.post("/api/topics", async (req, res) => {
 
     const topics = data.data.map((topic) => {
       let videos = [];
+      let possibleLinks = [];
 
-      // collect all possible links from API response
-      const possibleLinks = [];
-      if (topic.download_link) possibleLinks.push(topic.download_link);
-      if (topic.file_url) possibleLinks.push(topic.file_url);
-      if (topic.stream_url) possibleLinks.push(topic.stream_url);
-      if (topic.videopath) possibleLinks.push(topic.videopath);
+      // Collect all potential video URLs
+      ["download_link", "file_url", "stream_url", "videopath", "video_link", "playback_url", "url", "s3_url"]
+        .forEach((key) => {
+          if (topic[key]) possibleLinks.push(topic[key]);
+        });
+
+      // bitrate arrays
       if (topic.bitrate_urls && Array.isArray(topic.bitrate_urls)) {
-        topic.bitrate_urls.forEach((b) => possibleLinks.push(b.url || b.link));
+        topic.bitrate_urls.forEach((b) => {
+          if (b.url) possibleLinks.push(b.url);
+          if (b.link) possibleLinks.push(b.link);
+        });
       }
 
-      // filter only non-DRM transcoded v2 links
+      // Filter only transcoded v2 non-DRM links
       const validLinks = possibleLinks.filter(
         (u) => u && u.includes("transcoded-videos.securevideo.in") && !u.includes("drm")
       );
 
-      console.log("🎥 Valid links for", topic.topic_name, ":", validLinks);
+      console.log(`🎥 [${topic.topic_name}] Links found:`, validLinks);
 
-      // make resolution objects
+      // Format resolutions
       validLinks.forEach((u) => {
         let resLabel = "Auto";
-        if (u.includes("720")) resLabel = "720p";
+        if (u.includes("1080")) resLabel = "1080p";
+        else if (u.includes("720")) resLabel = "720p";
         else if (u.includes("480")) resLabel = "480p";
         else if (u.includes("360")) resLabel = "360p";
         videos.push({ quality: resLabel, url: u });
@@ -131,3 +139,4 @@ app.post("/api/topics", async (req, res) => {
 app.listen(PORT, () => {
   console.log(`✅ Server running on http://localhost:${PORT}`);
 });
+      
