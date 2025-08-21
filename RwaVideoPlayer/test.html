@@ -7,34 +7,30 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
     body { background: #0d0d0d; color: white; font-family: 'Segoe UI', sans-serif; }
-    h1, h2 { text-shadow: 0 0 8px #22c55e; }
-    .video-container { position: relative; width: 100%; max-width: 900px; margin: auto; border: 2px solid #22c55e; border-radius: 15px; overflow: hidden; box-shadow: 0px 0px 20px rgba(34,197,94,0.5); }
-    video { width: 100%; height: auto; display: block; background: black; border-radius: 10px; }
-    .batch-item { transition: 0.3s; }
-    .batch-item:hover { transform: scale(1.03); background: #16a34a; }
-    .active-batch { box-shadow: 0 0 12px #22c55e; border-left: 4px solid #22c55e; }
-    .playlist { max-height: 300px; overflow-y: auto; }
-    .playlist-item:hover { background: #16a34a; cursor: pointer; }
-    .download-btn { background: #22c55e; color: black; font-weight: bold; padding: 0.25rem 0.5rem; border-radius: 6px; margin-left: 5px; transition: 0.3s; }
-    .download-btn:hover { background: #16a34a; }
+    .video-container { position: relative; width: 100%; max-width: 900px; margin: auto;
+      border: 2px solid #22c55e; border-radius: 15px; overflow: hidden;
+      box-shadow: 0px 0px 20px rgba(34,197,94,0.5);
+    }
+    video { width: 100%; height: auto; display: block; background: black; }
+    .clickable:hover { cursor: pointer; background-color: #16a34a; transition: 0.3s; }
   </style>
 </head>
 <body class="flex flex-col items-center justify-start min-h-screen p-6">
 
   <h1 class="text-3xl font-bold mb-6 text-green-400">🎬 RWA Video Dashboard</h1>
 
-  <!-- Step 1: Enter Details -->
+  <!-- Login Section -->
   <div id="loginSection" class="mb-6 flex flex-col sm:flex-row items-center gap-3">
-    <input id="tokenInput" type="text" placeholder="Enter your login token" class="p-2 w-80 rounded border border-green-400 text-black">
-    <input id="useridInput" type="text" placeholder="Enter your User ID" class="p-2 w-60 rounded border border-green-400 text-black">
-    <select id="versionSelect" class="p-2 rounded border border-green-400 text-black">
-      <option value="">Select Version</option>
-      <option value="v1">AppX v1</option>
-      <option value="v2">AppX v2</option>
-      <option value="v3">AppX v3</option>
-      <option value="v4">AppX v4</option>
-    </select>
-    <button id="loadBatches" class="bg-green-500 hover:bg-green-600 px-4 py-2 rounded-lg font-semibold">🔑 Load Batches</button>
+    <input id="insInput" type="text" placeholder="Enter Institute (e.g., rozgarapinew.teachx.in)"
+           class="p-2 w-80 rounded border border-green-400 text-black">
+    <input id="useridInput" type="text" placeholder="Enter User ID"
+           class="p-2 w-60 rounded border border-green-400 text-black">
+    <input id="tokenInput" type="text" placeholder="Enter Token"
+           class="p-2 w-60 rounded border border-green-400 text-black">
+    <button id="loadBatches"
+            class="bg-green-500 hover:bg-green-600 px-4 py-2 rounded-lg font-semibold">
+      🔑 Load Batches
+    </button>
   </div>
 
   <!-- Spinner -->
@@ -43,46 +39,38 @@
       <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
       <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4l3-3-3-3v4a12 12 0 00-12 12h4z"></path>
     </svg>
-    <span>Loading batches...</span>
+    <span>Loading...</span>
   </div>
 
-  <!-- Step 2: Batch List -->
+  <!-- Batches -->
   <div id="batchSection" class="hidden mb-6 w-full max-w-3xl">
     <h2 class="text-xl font-semibold mb-3">📂 Your Batches</h2>
     <ul id="batchList" class="grid grid-cols-1 sm:grid-cols-2 gap-4"></ul>
   </div>
 
-  <!-- Step 3: Playlist & Video Player -->
-  <div id="playerSection" class="hidden w-full max-w-3xl flex flex-col gap-4">
+  <!-- Video Player -->
+  <div id="playerSection" class="hidden w-full max-w-3xl">
     <h2 class="text-xl font-semibold mb-3">▶ Selected Video</h2>
     <div class="video-container">
       <video id="video" controls></video>
     </div>
-    <div>
-      <h3 class="text-lg font-semibold mb-2">📄 Playlist</h3>
-      <ul id="playlist" class="playlist grid grid-cols-1 gap-2"></ul>
-    </div>
   </div>
 
-  <!-- HLS.js -->
   <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
   <script>
     const loadBtn = document.getElementById("loadBatches");
     const batchSection = document.getElementById("batchSection");
-    const playerSection = document.getElementById("playerSection");
     const batchList = document.getElementById("batchList");
+    const playerSection = document.getElementById("playerSection");
     const video = document.getElementById("video");
-    const playlist = document.getElementById("playlist");
     const spinner = document.getElementById("loadingSpinner");
 
-    let currentBatch = null;
-
     loadBtn.addEventListener("click", async () => {
-      const token = document.getElementById("tokenInput").value.trim();
+      const ins = document.getElementById("insInput").value.trim();
       const userid = document.getElementById("useridInput").value.trim();
-      const version = document.getElementById("versionSelect").value;
+      const token = document.getElementById("tokenInput").value.trim();
 
-      if (!token || !userid || !version) return alert("⚠ Please enter Token, UserID and select Version");
+      if (!ins || !userid || !token) return alert("⚠ Please enter Institute, UserID, and Token");
 
       spinner.classList.remove("hidden");
       batchSection.classList.add("hidden");
@@ -92,7 +80,7 @@
         const res = await fetch("/api/batches", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ token, userid, version })
+          body: JSON.stringify({ ins, userid, token })
         });
 
         if (!res.ok) throw new Error(`Server responded with ${res.status}`);
@@ -106,44 +94,23 @@
         }
 
         batchSection.classList.remove("hidden");
-
         data.batches.forEach(batch => {
           const li = document.createElement("li");
-          li.className = "p-4 bg-gray-800 rounded-lg cursor-pointer batch-item";
-          li.innerHTML = `${batch.name} <button class="download-btn" onclick="downloadBatch(event, '${batch.streamUrl}')">Download</button>`;
-          li.onclick = () => selectBatch(batch, li);
+          li.className = "p-4 bg-gray-800 rounded-lg clickable";
+          li.innerText = batch.name;
+          li.onclick = () => alert(`Selected Batch ID: ${batch.id}`);
           batchList.appendChild(li);
         });
 
       } catch (err) {
-        console.error("❌ Error:", err);
+        console.error(err);
         spinner.classList.add("hidden");
-        alert("❌ Failed to load batches. Check console for details.");
+        alert("❌ Failed to load batches. Check console.");
       }
     });
 
-    function selectBatch(batch, li) {
-      document.querySelectorAll(".batch-item").forEach(el => el.classList.remove("active-batch"));
-      li.classList.add("active-batch");
-      currentBatch = batch;
-      playerSection.classList.remove("hidden");
-      playlist.innerHTML = "";
-
-      if (batch.videos && batch.videos.length > 0) {
-        batch.videos.forEach(v => {
-          const item = document.createElement("li");
-          item.className = "p-2 bg-gray-700 rounded playlist-item";
-          item.innerHTML = `${v.name} <button class="download-btn" onclick="downloadVideo(event, '${v.url}')">Download</button>`;
-          item.onclick = () => playVideo(v.url);
-          playlist.appendChild(item);
-        });
-      }
-
-      // Play first video by default
-      if (batch.streamUrl) playVideo(batch.streamUrl);
-    }
-
     function playVideo(url) {
+      playerSection.classList.remove("hidden");
       if (Hls.isSupported()) {
         const hls = new Hls();
         hls.loadSource(url);
@@ -154,21 +121,8 @@
         alert("Your browser does not support HLS.");
       }
     }
-
-    function downloadVideo(e, url) {
-      e.stopPropagation();
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = "";
-      a.click();
-    }
-
-    function downloadBatch(e, url) {
-      e.stopPropagation();
-      alert("Batch download functionality can be customized with server-side API.");
-    }
   </script>
 
 </body>
-      </html>
-      
+  </html>
+  
