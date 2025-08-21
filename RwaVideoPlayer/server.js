@@ -14,59 +14,92 @@ const __dirname = path.dirname(__filename);
 app.use(express.json());
 app.use(express.static(__dirname));
 
-// ✅ Serve frontend
+// Serve frontend
 app.get("/", (req, res) => {
   res.sendFile(path.join(__dirname, "test.html"));
 });
 
-// ✅ API Endpoints mapping (from appx v1–v4 .py files)
-const APPX_ENDPOINTS = {
-  v1: "https://api.appx.one/v1/course/get/get_all_purchases",
-  v2: "https://api.appx.one/v2/course/get/get_all_purchases",
-  v3: "https://api.appx.one/v3/course/get/get_all_purchases",
-  v4: "https://api.appx.one/v4/course/get/get_all_purchases"
-};
+// Helper to build headers
+function buildHeaders(ins, userid, token) {
+  return {
+    "Client-Service": "Appx",
+    "Auth-Key": "appxapi",
+    "User-ID": userid,
+    "Authorization": token,
+    "User_app_category": "",
+    "Language": "en",
+    "Host": ins,
+    "User-Agent": "okhttp/4.9.1",
+  };
+}
 
-// ✅ Fetch Batches Route
+// ✅ Fetch Batches
 app.post("/api/batches", async (req, res) => {
-  const { token, userid, version } = req.body;
-
-  if (!token || !userid || !version) {
-    return res.status(400).json({ error: "Token, UserID and Version are required" });
-  }
-
-  const endpoint = APPX_ENDPOINTS[version];
-  if (!endpoint) {
-    return res.status(400).json({ error: "Invalid API version selected" });
-  }
-
   try {
-    const response = await fetch(endpoint, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "authorization": token,
-        "client-id": "1" // ✅ ye header appx .py se confirm karna hoga
-      },
-      body: JSON.stringify({ userId: userid })
-    });
+    const { ins, userid, token } = req.body;
+    if (!ins || !userid || !token) {
+      return res.status(400).json({ error: "Institute, UserID, and Token required" });
+    }
 
+    const hdr = buildHeaders(ins, userid, token);
+    const response = await fetch(`https://${ins}/get/mycourse?userid=${userid}`, { headers: hdr });
+    const data = await response.json();
+    res.json(data.data);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Failed to fetch batches" });
+  }
+});
+
+// ✅ Fetch Subjects
+app.post("/api/subjects", async (req, res) => {
+  try {
+    const { ins, userid, token, courseid } = req.body;
+    if (!ins || !userid || !token || !courseid) {
+      return res.status(400).json({ error: "Institute, UserID, Token, and CourseID required" });
+    }
+
+    const hdr = buildHeaders(ins, userid, token);
+    const response = await fetch(`https://${ins}/get/allsubjectfrmlivecourseclass?courseid=${courseid}`, { headers: hdr });
+    const data = await response.json();
+    res.json(data.data);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Failed to fetch subjects" });
+  }
+});
+
+// ✅ Fetch Topics + Download Links
+app.post("/api/topics", async (req, res) => {
+  try {
+    const { ins, userid, token, courseid, subjectid } = req.body;
+    if (!ins || !userid || !token || !courseid || !subjectid) {
+      return res.status(400).json({ error: "Institute, UserID, Token, CourseID, and SubjectID required" });
+    }
+
+    const hdr = buildHeaders(ins, userid, token);
+    const response = await fetch(`https://${ins}/get/alltopicfrmlivecourseclass?courseid=${courseid}&subjectid=${subjectid}`, { headers: hdr });
     const data = await response.json();
 
-    if (!response.ok) {
-      return res.status(response.status).json({
-        error: "Failed to fetch from AppX API",
-        details: data
+    // Build download links (decrypt if needed)
+    const topics = [];
+    for (let topic of data.data) {
+      topics.push({
+        topicid: topic.topicid,
+        topic_name: topic.topic_name,
+        videos: topic.videos || [],
+        download_link: topic.download_link || topic.pdf_link || null
       });
     }
 
-    res.json(data);
+    res.json(topics);
   } catch (err) {
-    console.error("❌ Error fetching batches:", err);
-    res.status(500).json({ error: "Internal server error" });
+    console.error(err);
+    res.status(500).json({ error: "Failed to fetch topics" });
   }
 });
 
 app.listen(PORT, () => {
   console.log(`✅ Server running on http://localhost:${PORT}`);
 });
+      
